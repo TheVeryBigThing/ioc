@@ -1,4 +1,7 @@
-package com.thing;
+package com.thing.service;
+
+import com.thing.annotation.PostConstruct;
+import com.thing.entity.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +20,11 @@ public class DefaultUserService implements UserService{
             mailService.sendEmail(user, "You are active now");
         }
 
+    }
+
+    @PostConstruct
+    public void init(){
+        System.out.println("Post construct finished!");
     }
 
     public void setMailService(MailService mailService) {

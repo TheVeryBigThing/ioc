@@ -1,8 +1,7 @@
 package com.thing.ioc;
 
-import com.thing.DefaultMailService;
-import com.thing.DefaultUserService;
-import com.thing.MailService;
+import com.thing.service.DefaultMailService;
+import com.thing.service.DefaultUserService;
 import com.thing.ioc.entity.Bean;
 import com.thing.ioc.entity.BeanDefinition;
 import org.junit.Test;
@@ -20,11 +19,11 @@ public class GenericApplicationContextTest {
     public void testCreateBeans() {
         BeanDefinition firstBeanDefinition = new BeanDefinition();
         firstBeanDefinition.setId("mailService");
-        firstBeanDefinition.setClassName("com.thing.DefaultMailService");
+        firstBeanDefinition.setClassName("com.thing.service.DefaultMailService");
 
         BeanDefinition secondBeanDefinition = new BeanDefinition();
         secondBeanDefinition.setId("userService");
-        secondBeanDefinition.setClassName("com.thing.DefaultUserService");
+        secondBeanDefinition.setClassName("com.thing.service.DefaultUserService");
 
         List<BeanDefinition> beanDefinitions = new ArrayList<>();
         beanDefinitions.add(firstBeanDefinition);
@@ -38,12 +37,12 @@ public class GenericApplicationContextTest {
         Bean firstBean = beans.get(0);
         assertEquals("mailService", firstBean.getId());
         String firstBeanClassName = firstBean.getValue().getClass().getName();
-        assertEquals("com.thing.DefaultMailService", firstBeanClassName);
+        assertEquals("com.thing.service.DefaultMailService", firstBeanClassName);
 
         Bean secondBean = beans.get(1);
         assertEquals("userService", secondBean.getId());
         String secondBeanClassName = secondBean.getValue().getClass().getName();
-        assertEquals("com.thing.DefaultUserService", secondBeanClassName);
+        assertEquals("com.thing.service.DefaultUserService", secondBeanClassName);
     }
 
     @Test

@@ -1,30 +1,108 @@
 package com.thing.ioc;
 
+import com.thing.annotation.PostConstruct;
 import com.thing.ioc.entity.Bean;
 import com.thing.ioc.entity.BeanDefinition;
 import com.thing.ioc.io.BeanDefinitionReader;
 import com.thing.ioc.io.XmlBeanDefinitionReader;
+import com.thing.processor.BeanFactoryPostProcessor;
+import com.thing.processor.BeanPostProcessor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
 public class GenericApplicationContext implements ApplicationContext {
-    private BeanDefinitionReader definitionReader;
     private List<Bean> beans;
-    private List<BeanDefinition> beanDefinitions;
 
     public GenericApplicationContext(String... paths) {
         this(new XmlBeanDefinitionReader(paths));
     }
 
     public GenericApplicationContext(BeanDefinitionReader beanDefinitionReader) {
-        definitionReader = beanDefinitionReader;
-
-        beanDefinitions = definitionReader.readBeanDefinitions();
+        List<BeanDefinition> beanDefinitions = beanDefinitionReader.readBeanDefinitions();
+        runBeanFactoryPostProcessors(beanDefinitions);
         beans = createBeans(beanDefinitions);
         injectValueDependencies(beans, beanDefinitions);
         injectRefDependencies(beans, beanDefinitions);
+        postProcessBeforeInitialization();
+        runPostConstructMethods();
+        runPostProcessAfterInitialization();
 
+    }
+
+    private void runPostConstructMethods() {
+        for (Bean bean : beans) {
+            Class<?> aClass = bean.getValue().getClass();
+            for (Method method : aClass.getMethods()) {
+                if (method.isAnnotationPresent(PostConstruct.class)) {
+                    try {
+                        method.invoke(bean.getValue());
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Post construct failed!", e);
+                    }
+                }
+
+            }
+        }
+    }
+
+    private void runPostProcessAfterInitialization() {
+        for (Bean bean : beans) {
+            if (isImplementing(bean.getValue().getClass(), BeanPostProcessor.class)) {
+                runPostProcessOnBeans(bean, "postProcessAfterInitialization");
+            }
+        }
+    }
+
+    private void postProcessBeforeInitialization() {
+        for (Bean bean : beans) {
+            if (isImplementing(bean.getValue().getClass(), BeanPostProcessor.class)) {
+                runPostProcessOnBeans(bean, "postProcessBeforeInitialization");
+            }
+        }
+    }
+
+    private void runPostProcessOnBeans(Bean systemBean, String methodName) {
+        for (Bean bean : beans) {
+            if (!bean.isSystem()) {
+                try {
+                    Class<?> aClass = systemBean.getValue().getClass();
+                    Method method = aClass.getMethod(methodName, Object.class, String.class);
+                    Object newBeanValue = method.invoke(systemBean.getValue(), bean, bean.getId());
+                    bean.setValue(newBeanValue);
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Post process before initialization failed!", e);
+                }
+            }
+        }
+    }
+
+    private void runBeanFactoryPostProcessors(List<BeanDefinition> beanDefinitions) {
+        for (BeanDefinition beanDefinition : beanDefinitions) {
+            try {
+                Class<?> clazz = Class.forName(beanDefinition.getClassName());
+                if (isImplementing(clazz, BeanFactoryPostProcessor.class)) {
+                    Object value = clazz.getConstructor().newInstance();
+                    Method postProcessBeanFactory = clazz.getMethod("postProcessBeanFactory", List.class);
+                    postProcessBeanFactory.invoke(value, beanDefinitions);
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                throw new RuntimeException("BeanFactoryPostProcessor failed!", e);
+            }
+        }
+    }
+
+    private boolean isImplementing(Class<?> clazz, Class<?> implementedClazz) {
+        for (Class<?> anInterface : clazz.getInterfaces()) {
+            if (anInterface.getName().equals(implementedClazz.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     List<Bean> createBeans(List<BeanDefinition> beanDefinitions) {
@@ -35,6 +113,7 @@ public class GenericApplicationContext implements ApplicationContext {
                 Object value = clazz.getConstructor().newInstance();
 
                 Bean bean = new Bean(beanDefinition.getId(), value);
+                bean.setSystem(isSystemBean(bean));
                 createdBeans.add(bean);
             }
             return createdBeans;
@@ -42,6 +121,14 @@ public class GenericApplicationContext implements ApplicationContext {
             e.printStackTrace();
             throw new RuntimeException("Create beans failed", e);
         }
+    }
+
+    private boolean isSystemBean(Bean bean) {
+        Class<?> clazz = bean.getValue().getClass();
+        if (isImplementing(clazz, BeanFactoryPostProcessor.class) || isImplementing(clazz, BeanPostProcessor.class)) {
+            return true;
+        }
+        return false;
     }
 
     void injectValueDependencies(List<Bean> beansToInject, List<BeanDefinition> beanDefinitionsToInject) {
@@ -171,7 +258,7 @@ public class GenericApplicationContext implements ApplicationContext {
     public <T> T getBean(String id, Class<T> clazz) {
         Object value = getBean(id);
         if (!value.getClass().equals(clazz)) {
-            throw new RuntimeException("Bean with id:" + id + " has deffernt class than: " + clazz.getName());
+            throw new RuntimeException("Bean with id:" + id + " has different class than: " + clazz.getName());
         }
         return (T) value;
     }

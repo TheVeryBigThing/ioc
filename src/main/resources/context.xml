@@ -1,10 +1,17 @@
 <beans>
-    <bean id="mailService" class="com.thing.DefaultMailService">
+    <bean id="mailService" class="com.thing.service.DefaultMailService">
         <property name="port" value="1099"/>
         <property name="protocol" value="POP3"/>
     </bean>
 
-    <bean id="userService" class="com.thing.DefaultUserService">
+    <bean id="userService" class="com.thing.service.DefaultUserService">
         <property name="mailService" ref="mailService" />
     </bean>
+
+    <bean id="beanPostProcessor" class="com.thing.processor.impl.DefaultBeanPostProcessor">
+    </bean>
+
+    <bean id="beanFactoryPostProcessor" class="com.thing.processor.impl.DefaultBeanFactoryPostProcessor">
+    </bean>
+
 </beans>

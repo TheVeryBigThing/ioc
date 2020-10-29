@@ -1,4 +1,6 @@
-package com.thing;
+package com.thing.service;
+
+import com.thing.entity.User;
 
 public class DefaultMailService implements MailService{
     private int port;

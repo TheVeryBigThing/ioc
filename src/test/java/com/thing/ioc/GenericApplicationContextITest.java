@@ -1,8 +1,7 @@
 package com.thing.ioc;
 
-import com.thing.DefaultMailService;
-import com.thing.DefaultUserService;
-import com.thing.ioc.io.XmlBeanDefinitionReader;
+import com.thing.service.DefaultMailService;
+import com.thing.service.DefaultUserService;
 import org.junit.Test;
 
 import java.util.List;

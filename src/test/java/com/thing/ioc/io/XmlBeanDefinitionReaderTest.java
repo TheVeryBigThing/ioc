@@ -16,12 +16,12 @@ import static org.junit.Assert.assertTrue;
 
 public class XmlBeanDefinitionReaderTest {
     private static final String CONTEXT = "<beans>\n" +
-            "    <bean id=\"defaultMailService\" class=\"com.thing.DefaultMailService\">\n" +
+            "    <bean id=\"defaultMailService\" class=\"com.thing.service.DefaultMailService\">\n" +
             "        <property name=\"port\" value=\"1099\"/>\n" +
             "        <property name=\"protocol\" value=\"POP3\"/>\n" +
             "    </bean>\n" +
             "\n" +
-            "    <bean id=\"userService\" class=\"com.thing.DefaultUserService\">\n" +
+            "    <bean id=\"userService\" class=\"com.thing.service.DefaultUserService\">\n" +
             "        <property name=\"mailService\" ref=\"defaultMailService\" />\n" +
             "    </bean>\n" +
             "</beans>";
@@ -36,7 +36,7 @@ public class XmlBeanDefinitionReaderTest {
 
             BeanDefinition firstBeanDefinition = beanDefinitions.get(0);
             assertEquals("defaultMailService", firstBeanDefinition.getId());
-            assertEquals("com.thing.DefaultMailService", firstBeanDefinition.getClassName());
+            assertEquals("com.thing.service.DefaultMailService", firstBeanDefinition.getClassName());
 
             assertTrue(firstBeanDefinition.getRefDependencies().isEmpty());
 
@@ -49,7 +49,7 @@ public class XmlBeanDefinitionReaderTest {
 
             BeanDefinition secondBeanDefinition = beanDefinitions.get(1);
             assertEquals("userService", secondBeanDefinition.getId());
-            assertEquals("com.thing.DefaultUserService", secondBeanDefinition.getClassName());
+            assertEquals("com.thing.service.DefaultUserService", secondBeanDefinition.getClassName());
 
             assertTrue(secondBeanDefinition.getValueDependencies().isEmpty());
 

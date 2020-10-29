@@ -1,4 +1,4 @@
-package com.thing;
+package com.thing.service;
 
 public interface UserService {
 
